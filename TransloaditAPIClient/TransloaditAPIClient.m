@@ -296,6 +296,10 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
 #endif
       
       AFJSONRequestOperation *operation = [AFJSONRequestOperation JSONRequestOperationWithRequest:request success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+#ifdef DDLogVerbose
+          DDLogVerbose( @"Result (Success): %@", JSON );
+#endif
+
          if ([JSON[@"ok"] isEqualToString:@"ASSEMBLY_EXECUTING"] && JSON[@"assembly_url"]) {
             NSString* assemblyURL = [NSURL URLWithString:JSON[@"assembly_url"]];
             [self performSelector:@selector(requestAssemblyStatusForURL:) withObject:assemblyURL afterDelay:self.requestAssemblyStatusEverySeconds];
@@ -307,6 +311,10 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
             }
          }
       } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+#ifdef DDLogVerbose
+          DDLogVerbose( @"Result (Failure): %@", JSON );
+#endif
+          
          if (_failureBlock) {
             dispatch_async(dispatch_get_main_queue(), ^{
                _failureBlock(error);
