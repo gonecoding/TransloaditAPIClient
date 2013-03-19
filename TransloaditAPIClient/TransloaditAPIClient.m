@@ -294,6 +294,8 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
    {
       self.numberOfAssemblyStatusRequests++;
       
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:assemblyURL];
+    request.cachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
 #ifdef DDLogVerbose
        DDLogVerbose( @"Number of assembly status requests: %d", self.numberOfAssemblyStatusRequests );
 #endif
