@@ -85,6 +85,11 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
     // Body parameters should be url encoded; see https://transloadit.com/docs/authentication
     [self setParameterEncoding:AFFormURLParameterEncoding];
 
+    // Default behavior is not to wait for final assembly results
+    self.shouldWaitForFinalAssemblyResults = NO;
+    self.requestAssemblyStatusEverySeconds = 3.0;
+    self.maximumNumberOfAssemblyStatusRequests = 20;
+    
     params = [[NSMutableDictionary alloc] init];
 
     return self;
@@ -190,10 +195,18 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
     NSDictionary *parameters = [TransloaditAPIRequest encodeParameters:params appendingSignatureUsingSecret:_secret];
 
     // Setup multipart form request
-    NSMutableURLRequest *request = [self multipartFormRequestWithMethod:@"POST" path:@"/assemblies?pretty=true" parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-        [formData appendPartWithFileData:data name:@"upload_1" fileName:name mimeType:type];
-    }];
-
+    NSMutableURLRequest *request = nil;
+    
+    if (data) {
+        request = [self multipartFormRequestWithMethod:@"POST" path:@"/assemblies?pretty=true" parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+            [formData appendPartWithFileData:data name:@"upload_1" fileName:name mimeType:type];
+        }];
+    } else {
+        request = [self requestWithMethod:@"POST" path:@"/assemblies?pretty=true" parameters:parameters];
+    }
+    
+    self.numberOfAssemblyStatusRequests = 0;
+    
     // Fire!
     AFHTTPRequestOperation *operation = [[[AFHTTPRequestOperation alloc] initWithRequest:request] autorelease];
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
@@ -203,7 +216,17 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
             });
         }
     }];
-    [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) { 
+    [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
+        if (!responseObject) {
+            if (_successBlock) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    _successBlock(nil);
+                });
+            }
+            
+            return;
+        }
+        
         // We need to decode the response string since responseObject arrives as NSData
         // This happens apparently because we did not invoke AFJSONRequestOperation but AFHTTPRequestOperation 
         NSError *decodingError = nil;
@@ -224,7 +247,20 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         // Parse server response to find a better error description
         NSError *decodingError = nil;
-        NSDictionary *errorJSON = [NSJSONSerialization JSONObjectWithData:[operation.responseString dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableLeaves error:&decodingError];
+        NSData *jsonData = [operation.responseString dataUsingEncoding:NSUTF8StringEncoding];
+        
+        if (!jsonData) {
+            if (_failureBlock) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    _failureBlock(error);
+                });
+            }
+            
+            return;
+        }
+        
+        NSDictionary *errorJSON = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableLeaves error:&decodingError];
+
         if (!decodingError) {
             NSDictionary *detail = @{ NSLocalizedDescriptionKey: errorJSON[@"message"] };
             error = [NSError errorWithDomain:errorJSON[@"error"] code:100 userInfo:detail];
