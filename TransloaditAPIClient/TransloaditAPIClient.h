@@ -35,6 +35,7 @@ typedef void (^TransloaditAPIClientFailureBlock)(NSError *);
 @property (nonatomic, retain) NSMutableDictionary *params;
 
 @property (nonatomic, assign) BOOL shouldWaitForFinalAssemblyResults;
+@property (nonatomic, assign) NSTimeInterval requestAssemblyStatusInitiallyAfterSeconds;
 @property (nonatomic, assign) NSTimeInterval requestAssemblyStatusEverySeconds;
 @property (nonatomic, assign) NSUInteger maximumNumberOfAssemblyStatusRequests;
 

@@ -44,6 +44,8 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
 @synthesize params;
 
 @synthesize shouldWaitForFinalAssemblyResults;
+@synthesize requestAssemblyStatusInitiallyAfterSeconds;
+@synthesize requestAssemblyStatusEverySeconds;
 @synthesize maximumNumberOfAssemblyStatusRequests;
 @synthesize numberOfAssemblyStatusRequests;
 
@@ -90,7 +92,8 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
     
     // Default behavior is not to wait for final assembly results
     self.shouldWaitForFinalAssemblyResults = NO;
-    self.requestAssemblyStatusEverySeconds = 3.0;
+    self.requestAssemblyStatusInitiallyAfterSeconds = 8.0;
+    self.requestAssemblyStatusEverySeconds = 5.0;
     self.maximumNumberOfAssemblyStatusRequests = 20;
     
     params = [[NSMutableDictionary alloc] init];
@@ -238,15 +241,15 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
             NSLog(@"Awww snap! JSON decoding error");
 
         if (self.shouldWaitForFinalAssemblyResults && [JSON[@"ok"] isEqualToString:@"ASSEMBLY_EXECUTING"] && JSON[@"assembly_url"]) {
-          NSString *assemblyURL = [NSURL URLWithString:JSON[@"assembly_url"]];
-          [self performSelector:@selector(requestAssemblyStatusForURL:) withObject:assemblyURL afterDelay:self.requestAssemblyStatusEverySeconds];
-       } else {
-          if (_successBlock) {
-             dispatch_async(dispatch_get_main_queue(), ^{
-                _successBlock(JSON);
-             });
-          }
-       }
+            NSString *assemblyURL = [NSURL URLWithString:JSON[@"assembly_url"]];
+            [self performSelector:@selector(requestAssemblyStatusForURL:) withObject:assemblyURL afterDelay:self.requestAssemblyStatusInitiallyAfterSeconds];
+        } else {
+            if (_successBlock) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    _successBlock(JSON);
+                });
+            }
+        }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         // Parse server response to find a better error description
         NSError *decodingError = nil;
