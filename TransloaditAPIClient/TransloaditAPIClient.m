@@ -27,6 +27,12 @@
 
 static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit.com";
 
+@interface TransloaditAPIClient ()
+
+@property (nonatomic, assign) NSUInteger numberOfAssemblyStatusRequests;
+
+@end
+
 @implementation TransloaditAPIClient
 {
     NSString *_secret;
@@ -36,6 +42,10 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
 }
 
 @synthesize params;
+
+@synthesize shouldWaitForFinalAssemblyResults;
+@synthesize maximumNumberOfAssemblyStatusRequests;
+@synthesize numberOfAssemblyStatusRequests;
 
 - (void)dealloc
 {
@@ -201,11 +211,16 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
         if (decodingError)
             NSLog(@"Awww snap! JSON decoding error");
 
-        if (_successBlock) {
-            dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.shouldWaitForFinalAssemblyResults && [JSON[@"ok"] isEqualToString:@"ASSEMBLY_EXECUTING"] && JSON[@"assembly_url"]) {
+          NSString *assemblyURL = [NSURL URLWithString:JSON[@"assembly_url"]];
+          [self performSelector:@selector(requestAssemblyStatusForURL:) withObject:assemblyURL afterDelay:self.requestAssemblyStatusEverySeconds];
+       } else {
+          if (_successBlock) {
+             dispatch_async(dispatch_get_main_queue(), ^{
                 _successBlock(JSON);
-            });
-        }
+             });
+          }
+       }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         // Parse server response to find a better error description
         NSError *decodingError = nil;
@@ -227,6 +242,50 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
     }];
 
     [operation start];
+}
+
+- (void)requestAssemblyStatusForURL:(NSURL *)assemblyURL
+{
+   NSURLRequest *request = [NSURLRequest requestWithURL:assemblyURL];
+   
+   if( self.numberOfAssemblyStatusRequests < self.maximumNumberOfAssemblyStatusRequests )
+   {
+      self.numberOfAssemblyStatusRequests++;
+      
+#ifdef DDLogVerbose
+       DDLogVerbose( @"Number of assembly status requests: %d", self.numberOfAssemblyStatusRequests );
+#endif
+      
+      AFJSONRequestOperation *operation = [AFJSONRequestOperation JSONRequestOperationWithRequest:request success:^(NSURLRequest *request, NSHTTPURLResponse *response, id JSON) {
+         if ([JSON[@"ok"] isEqualToString:@"ASSEMBLY_EXECUTING"] && JSON[@"assembly_url"]) {
+            NSString* assemblyURL = [NSURL URLWithString:JSON[@"assembly_url"]];
+            [self performSelector:@selector(requestAssemblyStatusForURL:) withObject:assemblyURL afterDelay:self.requestAssemblyStatusEverySeconds];
+         } else {
+            if (_successBlock) {
+               dispatch_async(dispatch_get_main_queue(), ^{
+                  _successBlock(JSON);
+               });
+            }
+         }
+      } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error, id JSON) {
+         if (_failureBlock) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+               _failureBlock(error);
+            });
+         }
+      }];
+      
+      [operation start];
+   }
+   else
+   {
+      if (_failureBlock) {
+         dispatch_async(dispatch_get_main_queue(), ^{
+            NSError* error = [NSError errorWithDomain:@"TransloaditAPIClient" code:500 userInfo:@{ NSLocalizedDescriptionKey: @"Maximum number of assembly status requests reached." }];
+            _failureBlock(error);
+         });
+      }
+   }
 }
 
 @end

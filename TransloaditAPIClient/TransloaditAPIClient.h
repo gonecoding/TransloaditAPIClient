@@ -34,6 +34,10 @@ typedef void (^TransloaditAPIClientFailureBlock)(NSError *);
 
 @property (nonatomic, retain) NSMutableDictionary *params;
 
+@property (nonatomic, assign) BOOL shouldWaitForFinalAssemblyResults;
+@property (nonatomic, assign) NSTimeInterval requestAssemblyStatusEverySeconds;
+@property (nonatomic, assign) NSUInteger maximumNumberOfAssemblyStatusRequests;
+
 + (TransloaditAPIClient *)sharedClient;
 
 - (void)authenticateWithKey:(NSString *)key andSecret:(NSString *)secret;
@@ -42,6 +46,7 @@ typedef void (^TransloaditAPIClientFailureBlock)(NSError *);
 - (void)setNotifyUrl:(NSString *)notifyUrl;
 - (void)setFields:(NSDictionary *)fields;
 - (BOOL)allKeysAreSet;
+- (void)uploadData:(NSData *)data namedAs:(NSString *)name ofContentType:(NSString *)type;
 - (void)uploadFileAt:(NSString *)path namedAs:(NSString *)name ofContentType:(NSString *)type;
 - (void)uploadFileFromPicker:(NSDictionary *)info;
 - (void)uploadImage:(UIImage *)image;
