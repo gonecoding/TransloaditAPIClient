@@ -85,6 +85,9 @@ static NSString * const kTransloaditAPIBaseURLString = @"http://api2.transloadit
     // Body parameters should be url encoded; see https://transloadit.com/docs/authentication
     [self setParameterEncoding:AFFormURLParameterEncoding];
 
+    // Transloadit sends JSON as 'text/plain' (grr!)
+    [AFJSONRequestOperation addAcceptableContentTypes:[NSSet setWithObject:@"text/plain"]];
+    
     // Default behavior is not to wait for final assembly results
     self.shouldWaitForFinalAssemblyResults = NO;
     self.requestAssemblyStatusEverySeconds = 3.0;
