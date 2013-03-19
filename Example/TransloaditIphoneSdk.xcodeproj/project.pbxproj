@@ -52,8 +52,8 @@
 		C3A447DE1516618700A428C4 /* libz.1.2.5.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.2.5.dylib; path = usr/lib/libz.1.2.5.dylib; sourceTree = SDKROOT; };
 		DC70063811F1DE75005D6D1C /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
 		DC70065611F1DF59005D6D1C /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
-		DC91FC6715DD9B7D007F0143 /* TransloaditAPIClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TransloaditAPIClient.h; sourceTree = "<group>"; };
-		DC91FC6815DD9B7D007F0143 /* TransloaditAPIClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TransloaditAPIClient.m; sourceTree = "<group>"; };
+		DC91FC6715DD9B7D007F0143 /* TransloaditAPIClient.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TransloaditAPIClient.h; sourceTree = "<group>"; tabWidth = 4; };
+		DC91FC6815DD9B7D007F0143 /* TransloaditAPIClient.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TransloaditAPIClient.m; sourceTree = "<group>"; tabWidth = 4; };
 		DC91FC6915DD9B7D007F0143 /* TransloaditAPIRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TransloaditAPIRequest.h; sourceTree = "<group>"; };
 		DC91FC6A15DD9B7D007F0143 /* TransloaditAPIRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TransloaditAPIRequest.m; sourceTree = "<group>"; };
 		DCCEAD2C163C620000F84CE3 /* AFHTTPClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AFHTTPClient.h; sourceTree = "<group>"; };
